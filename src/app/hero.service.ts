@@ -13,6 +13,10 @@ export class HeroService {
 
   private heroesURL = 'api/heroesAPIMethod';
 
+  httpOptions = {
+    headers: new HttpHeaders({ 'Content-Type': 'application/json' })
+  };
+
   constructor(
     private messageService: MessageService,
     private http: HttpClient) { }
@@ -30,7 +34,6 @@ export class HeroService {
   }
 
   getHeroes(): Observable<Hero[]> {
-    this.log('Fetched heroes');
     return this.http
       .get<Hero[]>(this.heroesURL)
       .pipe(
@@ -40,7 +43,20 @@ export class HeroService {
   }
 
   getHero(id: number): Observable<Hero> {
-    const hero = HEROES.find(h => h.id == id)!;
-    return of(hero);
+    const url = `${this.heroesURL}/${id}`;
+    return this.http
+      .get<Hero>(url)
+      .pipe(
+        tap(_ => this.log(`Fetched hero id=${id}`)),
+        catchError(this.handleError<Hero>(`getHero: ID=${id}`))
+      )
+  }
+
+  updateHero(hero: Hero): Observable<any> {
+    return this.http
+      .put(this.heroesURL, hero, this.httpOptions)
+      .pipe(tap(_ => this.log(`Updated Hero ID:${hero.id}`)),
+        catchError(this.handleError<any>('Update hero'))
+      )
   }
 }
